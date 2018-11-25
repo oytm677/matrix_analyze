@@ -3,6 +3,7 @@
 
 import numpy as np
 import math as mt
+from PIL import Image, ImageDraw,ImageOps
 #class definition#
 class tras():
     check = 0#正しい順序で進んでいるかをチェックする
@@ -69,8 +70,7 @@ theta),np.sin(theta)],[0,0,-np.sin(theta),np.cos(theta)]])
     def solve_steq(self):
         if self.check != 3:
             return -1
-        Ainv = np.linalg.inv(self.newK)
-        self.x = np.round(np.dot(Ainv,self.force),5)
+        self.x = np.round(np.linalg.solve(self.newK,self.force),5)
         self.check = 4
         print(self.x)
         huyasu = []
@@ -104,7 +104,39 @@ theta),np.sin(theta)],[0,0,-np.sin(theta),np.cos(theta)]])
             ziku.append(round(zpower,2))
         self.ziku = ziku
         return ziku
+    def drawImg(self,x,y):
+        if (len(x) != self.N) or (len(x) != self.N):
+            print("your value is wrong. your arguments hava to mutch N")
+            return -1
+        im = Image.new('RGB', (500, 300), (128, 128, 128))
+        draw = ImageDraw.Draw(im)
+        self.x=self.x*10
+        for j in range(self.M):
+            #元の部材の描画
+            xini = int(x[self.cnct[j][0] - 1])
+            xfin = int(x[self.cnct[j][1] - 1])
+            yini = int(y[self.cnct[j][0] - 1])
+            yfin = int(y[self.cnct[j][1] - 1])
+            size = int(10*self.area[j]/max(self.area))
+            if self.ziku[j] > 0:
+                draw.line((xini,yini,xfin,yfin),fill=(0,255,0),width = 1)
+            else:
+                draw.line((xini,yini,xfin,yfin),fill=(0,255,255),width = 1)
+            #変位の描画
+            xini = int(x[self.cnct[j][0] - 1] + self.x[2*(self.cnct[j][0] - 1)])
+            xfin = int(x[self.cnct[j][1] - 1] + self.x[2*(self.cnct[j][1] - 1)])
+            yini = int(y[self.cnct[j][0] - 1] + self.x[2*(self.cnct[j][0] - 1)+1])
+            yfin = int(y[self.cnct[j][1] - 1] + self.x[2*(self.cnct[j][1] - 1)+1])
+            draw.line((xini,yini,xfin,yfin),fill=(255,0,0),width = 1)
+        im = ImageOps.flip(im)
+        #im = ImageOps.mirror(im)
+        im.show()
+        
+        
+        return 0
     
+#def analyze_all():
+
 #main function#
 #param    
 M = 10
@@ -119,6 +151,8 @@ force =np.array([0 ,0 ,0 , -900. ,0 ,0 ,0 , -500. ,0])
 force =force*1000
 x_zero = [1]
 y_zero = [1,6]
+x = [0,1,1,2,2,3]
+y = [0,1,0,1,0,0]
     
 instance = tras()
 tras.insert_direct(instance,M,N,area,E,lgth,cnct,angle)
@@ -127,3 +161,5 @@ tras.adjust_steq(instance,x_zero,y_zero)
 heni = tras.solve_steq(instance)
 tras.power(instance)
 zikuryoku = tras.zikuPower(instance)
+#tras.drawImg(instance,x,y)
+tras.drawImg(instance,[(t+1)*200/max(x) for t in x],[(t+1)*200/max(x) for t in y])
